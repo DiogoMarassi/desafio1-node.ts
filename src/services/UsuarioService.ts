@@ -1,19 +1,20 @@
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Usuario, Cargo } from '../models/Usuario';
-import { AppDataSource } from '../database/data-source';
-import { BadRequestException } from '../exceptions/badRequestException';
+import { BadRequestException } from '../exceptions/BadRequestException';
 import { hash } from 'bcrypt';
+import { Prato } from '../models/Prato';
+import { Autorizacao } from '../models/Autorizacao';
 
 function isEmailValido(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 export class UsuarioService {
-  private repository: Repository<Usuario>;
-
-  constructor() {
-    this.repository = AppDataSource.getRepository(Usuario);
-  }
+  constructor(
+    private repository: Repository<Usuario>,
+    private repositoryPrato: Repository<Prato>,
+    private repositoryAutorizacao: Repository<Autorizacao>
+  ) {}
 
   async findAll(): Promise<Usuario[]> {
     return this.repository.find();
@@ -31,7 +32,6 @@ export class UsuarioService {
   }
 
   async create(data: Partial<Usuario>): Promise<Usuario> {
-    
     if (!data.nome || typeof data.nome !== 'string') {
       throw new BadRequestException('O nome é obrigatório e deve ser uma string');
     }
@@ -43,10 +43,9 @@ export class UsuarioService {
     if (!data.senha || typeof data.senha !== 'string' || data.senha.length < 6) {
       throw new BadRequestException('Senha é obrigatória e deve ter no mínimo 6 caracteres');
     }
-    console.log("cargo");
-    console.log(data.cargo);
+
     if (!data.cargo || !Object.values(Cargo).includes(data.cargo)) {
-        throw new BadRequestException('Este cargo não existe');
+      throw new BadRequestException('Este cargo não existe');
     }
 
     const existente = await this.findByEmail(data.email);
@@ -59,6 +58,15 @@ export class UsuarioService {
       ...data,
       senha: senhaHasheada
     });
+
+    // Se o cargo for ADMIN, associa automaticamente a todos os pratos existentes
+    if (novoUsuario.cargo === 'ADMIN') {
+      const todosPratos = await this.repositoryPrato.find(); // busca todos os pratos ativos
+      const todosIds = todosPratos.map((p) => p.id);
+      console.log(todosIds)
+      // Usa o método de associação existente
+      await this.associarPratos(novoUsuario.id, todosIds);
+    }
 
     return novoUsuario;
   }
@@ -92,4 +100,29 @@ export class UsuarioService {
     const result = await this.repository.delete(id);
     return result.affected !== 0;
   }
+
+  async associarPratos(usuarioId: number, pratoIds: number[]) {
+    const usuario = await this.repository.findOne({ where: { id: usuarioId } });
+    if (!usuario) throw new Error('Usuário não encontrado');
+
+    const pratos = await this.repositoryPrato.find({ where: { id: In(pratoIds) } });
+    if (pratos.length !== pratoIds.length) throw new Error('Algum prato não foi encontrado');
+
+    const autorizacoes = pratos.map((prato) => {
+      const autorizacao = new Autorizacao();
+      autorizacao.usuario = usuario;
+      autorizacao.prato = prato;
+      return autorizacao;
+    });
+
+    await this.repositoryAutorizacao.save(autorizacoes);
+  }
+
+  async desassociarPratos(usuarioId: number, pratoIds: number[]) {
+  await this.repositoryAutorizacao.delete({
+    usuario: { id: usuarioId },
+    prato: In(pratoIds)
+  });
+}
+
 }

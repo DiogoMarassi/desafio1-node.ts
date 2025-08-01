@@ -2,20 +2,19 @@ import { Repository, In } from 'typeorm';
 import { Prato } from '../models/Prato';
 import { AppDataSource } from '../database/data-source';
 import { Alimento } from '../models/Alimento';
-import { BadRequestException } from '../exceptions/badRequestException';
+import { BadRequestException } from '../exceptions/BadRequestException';
 import { AutorizacaoService } from './AutorizacaoService';
 import { Cargo } from '../models/Usuario';
+import { Usuario } from '../models/Usuario';
+import { Autorizacao } from '../models/Autorizacao';
 
-// Todos os serviços utilizam diretamente o AppDataSource de desenvolvimento, 
-// pois vocês não exigiram ambiente de testes ou injeção de dependência
 export class PratoService {
-  private repositoryPrato: Repository<Prato>;
-  private repositoryAlimento: Repository<Alimento>;
-  private autorizacaoService: AutorizacaoService;
-
-  constructor() {
-    this.repositoryPrato = AppDataSource.getRepository(Prato);
-    this.repositoryAlimento = AppDataSource.getRepository(Alimento);
+  constructor(
+      private repositoryPrato: Repository<Prato>,
+      private repositoryAlimento: Repository<Alimento>,
+      private autorizacaoService: AutorizacaoService,
+      private repositoryAutenticacao: Repository<Autorizacao>,
+  ) {
   }
 
   async findAll(): Promise<Prato[]> {
@@ -35,22 +34,24 @@ export class PratoService {
     if (!prato) return null;
 
     if (usuario.cargo === Cargo.ADMIN) return prato;
-
+    console.log("usuario e prato em dinfById de PratoService:");
+    console.log("Usuario: ",usuario.id);
+    console.log("Prato:", prato.id);
     const autorizado = await this.autorizacaoService.usuarioTemAcessoAoPrato(usuario.id, prato.id);
-    if (!autorizado) return null;
+    if (!autorizado) throw new BadRequestException('Este usuário não tem acesso a este prato!');
 
     return prato;
   }
 
-  async create(data: Partial<Prato>): Promise<Prato> {
+  async create(data: Partial<Prato>, usuario: Usuario): Promise<Prato> {
     console.log('Criando prato com dados:', data);
 
-    // Verificando campos obrigatórios
+    // 1. Verifica campos obrigatórios
     if (!data.nome || !data.preco || data.custo === undefined || !data.data_lancamento) {
       throw new BadRequestException('Campos nome, preco, custo e data_lancamento são obrigatórios');
     }
-    
-    // Verificando tipos numéricos
+
+    // 2. Valida tipos numéricos
     if (typeof data.preco !== 'number' || isNaN(data.preco)) {
       throw new BadRequestException('preco deve ser um número válido');
     }
@@ -58,20 +59,20 @@ export class PratoService {
       throw new BadRequestException('custo deve ser um número válido');
     }
 
-    // Verifica se foi adicionado algum alimento ao prato
+    // 3. Verifica alimentos
     if (!data.alimentos || !Array.isArray(data.alimentos) || data.alimentos.length === 0) {
       throw new BadRequestException('Lista de alimentos é obrigatória');
     }
 
-    // Buscando no banco se existem os alimentos adiconados ao prato
     const alimentos = await this.repositoryAlimento.find({
-      where: { id: In(data.alimentos) }
+      where: { id: In(data.alimentos) },
     });
-    // Se não existir -> erro
+
     if (alimentos.length !== data.alimentos.length) {
       throw new BadRequestException('Um ou mais alimentos informados não existem');
     }
-    
+
+    // 4. Cria o prato
     const prato = this.repositoryPrato.create({
       nome: data.nome,
       preco: data.preco,
@@ -81,11 +82,25 @@ export class PratoService {
       ativo: true,
     });
 
-    return this.repositoryPrato.save(prato);
+    const pratoSalvo = await this.repositoryPrato.save(prato);
+
+    // 5. Se usuário for ADMIN, cria registro na tabela Autorizacao
+    if (usuario.cargo === 'ADMIN') {
+      const autorizacao = this.repositoryAutenticacao.create({
+        usuario,
+        prato: pratoSalvo,
+      });
+
+      await this.repositoryAutenticacao.save(autorizacao);
+      console.log(`Autorização criada para usuário ${usuario.id} no prato ${pratoSalvo.id}`);
+    }
+
+    return pratoSalvo;
   }
 
   async update(id: number, usuario: { id: number; cargo: Cargo }, data: Partial<Prato>): Promise<Prato | null> {
     const prato = await this.findById(id, usuario);
+    
     if (!prato) return null;
 
     // Se alimentos forem passados, valida
@@ -101,10 +116,13 @@ export class PratoService {
       if (alimentos.length !== data.alimentos.length) {
         throw new BadRequestException('Um ou mais alimentos informados não existem');
       }
+      const autorizado = await this.autorizacaoService.usuarioTemAcessoAoPrato(usuario.id, prato.id);
+      if (!autorizado) throw new BadRequestException('Este usuário não tem acesso a este prato!');
 
       data.alimentos = alimentos;
     }
 
+    
     Object.assign(prato, data);
     return this.repositoryPrato.save(prato);
   }

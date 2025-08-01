@@ -1,14 +1,15 @@
 import { Repository } from 'typeorm';
 import { Alimento } from '../models/Alimento';
 import { AppDataSource } from '../database/data-source';
-import { BadRequestException } from '../exceptions/badRequestException';
+import { BadRequestException } from '../exceptions/BadRequestException';
+import { Prato } from '../models/Prato';
 
 export class AlimentoService {
-  private repository: Repository<Alimento>;
 
-  constructor() {
-    this.repository = AppDataSource.getRepository(Alimento);
-  }
+  constructor(
+    private repository: Repository<Alimento>,
+    private repositoryPrato: Repository<Prato>,
+  ) {}
 
   async findAll(): Promise<Alimento[]> {
     return this.repository.find({ where: { ativo: true } });
@@ -69,6 +70,20 @@ export class AlimentoService {
     if (!alimento) throw new BadRequestException('O alimento informado não existe!');
 
     alimento.ativo = false;
-    return this.repository.save(alimento);;
+    await this.repository.save(alimento);
+
+    // Remove associação de todos os pratos
+    const pratos = await this.repositoryPrato
+      .createQueryBuilder('prato')
+      .leftJoinAndSelect('prato.alimentos', 'alimento')
+      .where('alimento.id = :id', { id })
+      .getMany();
+
+    for (const prato of pratos) {
+      prato.alimentos = prato.alimentos.filter(a => a.id !== id);
+      await this.repositoryPrato.save(prato);
+    }
+
+    return alimento;
   }
 }

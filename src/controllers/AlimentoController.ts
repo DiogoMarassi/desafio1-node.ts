@@ -7,8 +7,14 @@
 
 import { Request, Response } from 'express';
 import { AlimentoService } from '../services/AlimentoService';
+import { AppDataSource } from '../database/data-source';
+import { Prato } from '../models/Prato';
+import { Alimento } from '../models/Alimento';
 
-const service = new AlimentoService();
+const service = new AlimentoService(
+  AppDataSource.getRepository(Alimento),
+  AppDataSource.getRepository(Prato)
+);
 
 export class AlimentoController {
   /**

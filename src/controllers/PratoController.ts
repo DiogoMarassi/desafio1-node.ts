@@ -8,8 +8,25 @@
 import { Request, Response } from 'express';
 import { PratoService } from '../services/PratoService';
 import { AuthenticatedRequest } from '../types/AuthenticatedRequest';
+import { AutorizacaoService } from '../services/AutorizacaoService';
+import { AppDataSource } from '../database/data-source';
+import { Prato } from '../models/Prato';
+import { Alimento } from '../models/Alimento';
+import { Autorizacao } from '../models/Autorizacao';
+import { Usuario } from '../models/Usuario';
 
-const service = new PratoService();
+
+const autorizacaoService = new AutorizacaoService(
+  AppDataSource.getRepository(Autorizacao), 
+  AppDataSource.getRepository(Usuario)
+);
+
+const pratoService = new PratoService(
+  AppDataSource.getRepository(Prato), 
+  AppDataSource.getRepository(Alimento), 
+  autorizacaoService,
+  AppDataSource.getRepository(Autorizacao), 
+);
 
 export class PratoController {
   /**
@@ -58,7 +75,12 @@ export class PratoController {
    *                           type: number
    */
   async getAll(req: Request, res: Response) {
-    const pratos = await service.findAll();
+    const { user } = req as AuthenticatedRequest;
+    const autorizado = await autorizacaoService.usuarioEhAdmin(user.id);
+    if (!autorizado) {
+      return res.status(403).json({ message: 'Esta ação necessita de permissão de administrador!' });
+    }
+    const pratos = await pratoService.findAll();
     res.json(pratos);
   }
 
@@ -120,7 +142,7 @@ async getById(req: Request, res: Response) {
     return res.status(401).json({ message: 'Usuário não autenticado ou dados incompletos no token' });
   }
 
-  const prato = await service.findById(+req.params.id, usuario);
+  const prato = await pratoService.findById(+req.params.id, usuario);
   if (!prato) return res.status(404).json({ message: 'Prato não encontrado ou acesso negado' });
 
   res.json(prato);
@@ -168,10 +190,34 @@ async getById(req: Request, res: Response) {
    *         description: Prato criado com sucesso.
    */
   async create(req: Request, res: Response) {
-    const novoPrato = await service.create(req.body);
-    res.status(201).json(novoPrato);
-  }
+    try {
+      const { user } = req as AuthenticatedRequest;
 
+      // Verifica se é admin
+      const autorizado = await autorizacaoService.usuarioEhAdmin(user.id);
+      if (!autorizado) {
+        return res
+          .status(403)
+          .json({ message: 'Esta ação necessita de permissão de administrador!' });
+      }
+
+      // Busca o usuário completo no banco
+      const usuarioRepo = AppDataSource.getRepository(Usuario);
+      const usuario = await usuarioRepo.findOne({ where: { id: user.id } });
+
+      if (!usuario) {
+        return res.status(404).json({ message: 'Usuário não encontrado' });
+      }
+
+      // Cria o prato já com a autorização do usuário
+      const novoPrato = await pratoService.create(req.body, usuario);
+
+      return res.status(201).json(novoPrato);
+    } catch (error: any) {
+      console.error('Erro ao criar prato:', error);
+      return res.status(500).json({ message: 'Erro ao criar prato', error: error.message });
+    }
+  }
   /**
    * @swagger
    * /api/pratos/{id}:
@@ -213,8 +259,12 @@ async getById(req: Request, res: Response) {
    *         description: Prato não encontrado.
    */
   async update(req: Request, res: Response) {
-    const user = (req as AuthenticatedRequest).user;
-    const atualizado = await service.update(+req.params.id, user, req.body);
+    const { user } = req as AuthenticatedRequest;
+    const autorizado = await autorizacaoService.usuarioEhEditor(user.id);
+    if (!autorizado) {
+      return res.status(403).json({ message: 'Esta ação necessita de permissão de editor ou administrador!' });
+    }
+    const atualizado = await pratoService.update(+req.params.id, user, req.body);
     if (!atualizado) return res.status(404).json({ message: 'Prato não encontrado' });
     res.json(atualizado);
   }
@@ -240,8 +290,12 @@ async getById(req: Request, res: Response) {
    *         description: Prato não encontrado.
    */
   async softDelete(req: Request, res: Response) {
-    const user = (req as AuthenticatedRequest).user;
-    const ok = await service.softDelete(+req.params.id, user);
+    const { user } = req as AuthenticatedRequest;
+    const autorizado = await autorizacaoService.usuarioEhAdmin(user.id);
+    if (!autorizado) {
+      return res.status(403).json({ message: 'Esta ação necessita de permissão de administrador!' });
+    }
+    const ok = await pratoService.softDelete(+req.params.id, user);
     if (!ok) return res.status(404).json({ message: 'Prato não encontrado' });
     res.status(204).send();
   }
