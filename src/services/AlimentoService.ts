@@ -1,6 +1,5 @@
 import { Repository } from 'typeorm';
 import { Alimento } from '../models/Alimento';
-import { AppDataSource } from '../database/data-source';
 import { BadRequestException } from '../exceptions/BadRequestException';
 import { Prato } from '../models/Prato';
 
@@ -9,7 +8,7 @@ export class AlimentoService {
   constructor(
     private repository: Repository<Alimento>,
     private repositoryPrato: Repository<Prato>,
-  ) {}
+  ) { }
 
   async findAll(): Promise<Alimento[]> {
     return this.repository.find({ where: { ativo: true } });

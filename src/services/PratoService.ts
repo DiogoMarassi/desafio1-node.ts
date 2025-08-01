@@ -1,6 +1,5 @@
 import { Repository, In } from 'typeorm';
 import { Prato } from '../models/Prato';
-import { AppDataSource } from '../database/data-source';
 import { Alimento } from '../models/Alimento';
 import { BadRequestException } from '../exceptions/BadRequestException';
 import { AutorizacaoService } from './AutorizacaoService';
@@ -10,10 +9,10 @@ import { Autorizacao } from '../models/Autorizacao';
 
 export class PratoService {
   constructor(
-      private repositoryPrato: Repository<Prato>,
-      private repositoryAlimento: Repository<Alimento>,
-      private autorizacaoService: AutorizacaoService,
-      private repositoryAutenticacao: Repository<Autorizacao>,
+    private repositoryPrato: Repository<Prato>,
+    private repositoryAlimento: Repository<Alimento>,
+    private autorizacaoService: AutorizacaoService,
+    private repositoryAutenticacao: Repository<Autorizacao>,
   ) {
   }
 
@@ -25,7 +24,7 @@ export class PratoService {
   }
 
   async findById(id: number, usuario: { id: number; cargo: Cargo }): Promise<Prato | null> {
-    
+
     const prato = await this.repositoryPrato.findOne({
       where: { id, ativo: true },
       relations: ['alimentos'],
@@ -35,7 +34,7 @@ export class PratoService {
 
     if (usuario.cargo === Cargo.ADMIN) return prato;
     console.log("usuario e prato em dinfById de PratoService:");
-    console.log("Usuario: ",usuario.id);
+    console.log("Usuario: ", usuario.id);
     console.log("Prato:", prato.id);
     const autorizado = await this.autorizacaoService.usuarioTemAcessoAoPrato(usuario.id, prato.id);
     if (!autorizado) throw new BadRequestException('Este usuário não tem acesso a este prato!');
@@ -100,7 +99,7 @@ export class PratoService {
 
   async update(id: number, usuario: { id: number; cargo: Cargo }, data: Partial<Prato>): Promise<Prato | null> {
     const prato = await this.findById(id, usuario);
-    
+
     if (!prato) return null;
 
     // Se alimentos forem passados, valida
@@ -122,7 +121,7 @@ export class PratoService {
       data.alimentos = alimentos;
     }
 
-    
+
     Object.assign(prato, data);
     return this.repositoryPrato.save(prato);
   }

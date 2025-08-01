@@ -17,15 +17,15 @@ import { Usuario } from '../models/Usuario';
 
 
 const autorizacaoService = new AutorizacaoService(
-  AppDataSource.getRepository(Autorizacao), 
+  AppDataSource.getRepository(Autorizacao),
   AppDataSource.getRepository(Usuario)
 );
 
 const pratoService = new PratoService(
-  AppDataSource.getRepository(Prato), 
-  AppDataSource.getRepository(Alimento), 
+  AppDataSource.getRepository(Prato),
+  AppDataSource.getRepository(Alimento),
   autorizacaoService,
-  AppDataSource.getRepository(Autorizacao), 
+  AppDataSource.getRepository(Autorizacao),
 );
 
 export class PratoController {
@@ -135,18 +135,18 @@ export class PratoController {
    *       404:
    *         description: Prato não encontrado.
    */
-async getById(req: Request, res: Response) {
-  const usuario = (req as any).user;
+  async getById(req: Request, res: Response) {
+    const usuario = (req as any).user;
 
-  if (!usuario || !usuario.id || !usuario.cargo) {
-    return res.status(401).json({ message: 'Usuário não autenticado ou dados incompletos no token' });
+    if (!usuario || !usuario.id || !usuario.cargo) {
+      return res.status(401).json({ message: 'Usuário não autenticado ou dados incompletos no token' });
+    }
+
+    const prato = await pratoService.findById(+req.params.id, usuario);
+    if (!prato) return res.status(404).json({ message: 'Prato não encontrado ou acesso negado' });
+
+    res.json(prato);
   }
-
-  const prato = await pratoService.findById(+req.params.id, usuario);
-  if (!prato) return res.status(404).json({ message: 'Prato não encontrado ou acesso negado' });
-
-  res.json(prato);
-}
   /**
    * @swagger
    * /api/pratos:

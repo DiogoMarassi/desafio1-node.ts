@@ -23,7 +23,7 @@ const service = new UsuarioService(
 );
 
 const autorizacaoService = new AutorizacaoService(
-  AppDataSource.getRepository(Autorizacao), 
+  AppDataSource.getRepository(Autorizacao),
   AppDataSource.getRepository(Usuario)
 );
 
@@ -276,33 +276,33 @@ export class UsuarioController {
     const { email, senha } = req.body;
 
     if (!email || !senha) {
-        return res.status(400).json({ message: 'Email e senha são obrigatórios' });
+      return res.status(400).json({ message: 'Email e senha são obrigatórios' });
     }
     console.log(email);
     console.log(senha);
     const usuario = await service.findByEmail(email);
     if (!usuario) {
-        return res.status(401).json({ message: 'Credenciais inválidas' });
+      return res.status(401).json({ message: 'Credenciais inválidas' });
     }
 
     const senhaValida = await compare(senha, usuario.senha);
     if (!senhaValida) {
-        return res.status(401).json({ message: 'Credenciais inválidas' });
+      return res.status(401).json({ message: 'Credenciais inválidas' });
     }
 
     // Gera token com id, email e cargo
     const token = jwt.sign(
-        {
+      {
         id: usuario.id,
         email: usuario.email,
         cargo: usuario.cargo,
-        },
-        process.env.JWT_SECRET!,
-        { expiresIn: '1d' }
+      },
+      process.env.JWT_SECRET!,
+      { expiresIn: '1d' }
     );
 
     res.json({ token });
-    }
+  }
 
   /**
  * @swagger
@@ -364,40 +364,40 @@ export class UsuarioController {
     return res.status(200).json({ message: 'Pratos associados com sucesso' });
   }
 
-    /**
-   * @swagger
-   * /api/usuarios/{id}/pratos:
-   *   delete:
-   *     tags: ["Usuários"]
-   *     summary: Remove a associação de um usuário com uma lista de pratos
-   *     security:
-   *     - bearerAuth: []
-   *     parameters:
-   *       - name: id
-   *         in: path
-   *         required: true
-   *         schema:
-   *           type: integer
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             type: object
-   *             properties:
-   *               pratoIds:
-   *                 type: array
-   *                 items:
-   *                   type: integer
-   *                 example: [1, 2, 3]
-   *     responses:
-   *       200:
-   *         description: Pratos desassociados com sucesso.
-   *       403:
-   *         description: Ação não autorizada.
-   *       404:
-   *         description: Usuário não encontrado.
-   */
+  /**
+ * @swagger
+ * /api/usuarios/{id}/pratos:
+ *   delete:
+ *     tags: ["Usuários"]
+ *     summary: Remove a associação de um usuário com uma lista de pratos
+ *     security:
+ *     - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               pratoIds:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 example: [1, 2, 3]
+ *     responses:
+ *       200:
+ *         description: Pratos desassociados com sucesso.
+ *       403:
+ *         description: Ação não autorizada.
+ *       404:
+ *         description: Usuário não encontrado.
+ */
   async desassociarPratos(req: Request, res: Response) {
     const { user } = req as AuthenticatedRequest;
     const autorizado = await autorizacaoService.usuarioEhAdmin(user.id);

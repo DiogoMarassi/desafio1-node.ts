@@ -14,7 +14,7 @@ export class UsuarioService {
     private repository: Repository<Usuario>,
     private repositoryPrato: Repository<Prato>,
     private repositoryAutorizacao: Repository<Autorizacao>
-  ) {}
+  ) { }
 
   async findAll(): Promise<Usuario[]> {
     return this.repository.find();
@@ -119,10 +119,10 @@ export class UsuarioService {
   }
 
   async desassociarPratos(usuarioId: number, pratoIds: number[]) {
-  await this.repositoryAutorizacao.delete({
-    usuario: { id: usuarioId },
-    prato: In(pratoIds)
-  });
-}
+    await this.repositoryAutorizacao.delete({
+      usuario: { id: usuarioId },
+      prato: In(pratoIds)
+    });
+  }
 
 }

@@ -4,9 +4,9 @@ import { authMiddleware } from '../middlewares/authMiddleware';
 
 const router = Router();
 const controller = new UsuarioController();
+
 router.post('/:id/pratos', authMiddleware, controller.associarPratos.bind(controller));
 router.delete('/:id/pratos', authMiddleware, controller.desassociarPratos.bind(controller));
-
 router.get('/', authMiddleware, controller.getAll.bind(controller));
 router.get('/:id', authMiddleware, controller.getById.bind(controller));
 router.post('/', authMiddleware, controller.create.bind(controller));

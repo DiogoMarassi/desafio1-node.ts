@@ -13,7 +13,7 @@ import { AutorizacaoService } from '../services/AutorizacaoService';
 import { AuthenticatedRequest } from '../types/AuthenticatedRequest';
 
 const autorizacaoService = new AutorizacaoService(
-  AppDataSource.getRepository(Autorizacao), 
+  AppDataSource.getRepository(Autorizacao),
   AppDataSource.getRepository(Usuario)
 );
 
@@ -165,62 +165,62 @@ export class AutorizacaoController {
     const ehAdmin = await autorizacaoService.usuarioEhAdmin(usuarioId);
     res.status(200).json({ admin: ehAdmin });
   }
-/**
- * @swagger
- * /api/autorizacoes/pratos-pelo-token:
- *   get:
- *     tags: ["Autorizacoes"]
- *     summary: Lista os pratos autorizados para o usuário logado
- *     description: Retorna todas as autorizações de pratos para o usuário identificado pelo token JWT.
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Lista de autorizações do usuário logado.
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: integer
- *                   usuario:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: integer
- *                       nome:
- *                         type: string
- *                   prato:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: integer
- *                       nome:
- *                         type: string
- *       401:
- *         description: Token ausente ou inválido.
- */
-async getByUsuarioToken(req: Request, res: Response) {
-  console.log("ENTROUUUUUUUUU!!s");
-  const user = (req as AuthenticatedRequest).user;
+  /**
+   * @swagger
+   * /api/autorizacoes/pratos-pelo-token:
+   *   get:
+   *     tags: ["Autorizacoes"]
+   *     summary: Lista os pratos autorizados para o usuário logado
+   *     description: Retorna todas as autorizações de pratos para o usuário identificado pelo token JWT.
+   *     security:
+   *       - bearerAuth: []
+   *     responses:
+   *       200:
+   *         description: Lista de autorizações do usuário logado.
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: array
+   *               items:
+   *                 type: object
+   *                 properties:
+   *                   id:
+   *                     type: integer
+   *                   usuario:
+   *                     type: object
+   *                     properties:
+   *                       id:
+   *                         type: integer
+   *                       nome:
+   *                         type: string
+   *                   prato:
+   *                     type: object
+   *                     properties:
+   *                       id:
+   *                         type: integer
+   *                       nome:
+   *                         type: string
+   *       401:
+   *         description: Token ausente ou inválido.
+   */
+  async getByUsuarioToken(req: Request, res: Response) {
+    console.log("ENTROUUUUUUUUU!!s");
+    const user = (req as AuthenticatedRequest).user;
 
-  if (!user || !user.id) {
-    return res.status(401).json({ message: 'Token inválido ou ausente' });
+    if (!user || !user.id) {
+      return res.status(401).json({ message: 'Token inválido ou ausente' });
+    }
+
+    const usuarioId = user.id;
+
+    // usa o repository da classe, e não uma variável solta
+    const autorz = await autorizacaoRepository.find({
+      where: { usuario: { id: usuarioId } },
+      relations: ['prato', 'prato.alimentos'], // para trazer o prato junto
+    });
+
+    return res.json(autorz);
   }
-
-  const usuarioId = user.id;
-
-  // usa o repository da classe, e não uma variável solta
-  const autorz = await autorizacaoRepository.find({
-    where: { usuario: { id: usuarioId } },
-    relations: ['prato', 'prato.alimentos'], // para trazer o prato junto
-  });
-
-  return res.json(autorz);
-}
 
 
 

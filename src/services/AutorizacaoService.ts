@@ -1,12 +1,11 @@
-import { AppDataSource } from '../database/data-source';
 import { Autorizacao } from '../models/Autorizacao';
 import { Repository, In } from 'typeorm';
 import { Usuario, Cargo } from '../models/Usuario';
 
 export class AutorizacaoService {
-  constructor(  
+  constructor(
     private repository: Repository<Autorizacao>,
-    private repositoryUsuario: Repository<Usuario>) {}
+    private repositoryUsuario: Repository<Usuario>) { }
 
   async usuarioTemAcessoAoPrato(usuarioId: number, pratoId: number): Promise<boolean> {
     const autorizacao = await this.repository.findOne({
