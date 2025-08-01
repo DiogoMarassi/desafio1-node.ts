@@ -1,0 +1,50 @@
+# Dependências
+node_modules/
+
+# Build
+dist/
+build/
+.out/
+.next/
+.cache/
+coverage/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.log
+
+# Ambiente
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testes
+coverage/
+.nyc_output/
+
+# Locks opcionais
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Caso use TypeScript
+*.tsbuildinfo
+
+# Se usar Docker
+docker-compose.override.yml
