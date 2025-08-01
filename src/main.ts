@@ -8,7 +8,7 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import { Request, Response, NextFunction } from 'express';
 import { hash } from 'bcrypt';
-import { Cargo } from './models/Usuario'; 
+import { Cargo } from './models/Usuario';
 import cors from 'cors';
 
 const swaggerOptions = {
@@ -94,13 +94,6 @@ const DATABASE_HOST = process.env.DATABASE_HOST;
 const DATABASE_USER = process.env.DATABASE_USER;
 const DATABASE_PASSWORD = process.env.DATABASE_PASSWORD;
 
-console.log('DB config:', {
-  host: process.env.DATABASE_HOST,
-  user: process.env.DATABASE_USER,
-  password: process.env.DATABASE_PASSWORD,
-  database: process.env.DATABASE_NAME,
-});
-
 export async function verificaBancoComSuperuser() {
   // Etapa 1: Cria o banco se não existir
   const connection = await mysql.createConnection({
@@ -137,10 +130,10 @@ export async function verificaBancoComSuperuser() {
     );
 
     superUserId = result.insertId;
-    console.log('✅ Superusuário criado com sucesso!');
+    console.log('Superusuário criado com sucesso!');
   } else {
     superUserId = rows[0].id;
-    console.log('ℹ Superusuário já existe, nada foi feito.');
+    console.log('Superusuário já existe, nada foi feito.');
   }
 
   // Etapa 4: Associa o superusuário a todos os pratos
@@ -160,9 +153,9 @@ export async function verificaBancoComSuperuser() {
         );
       }
     }
-    console.log(`🔗 Superusuário associado a ${pratos.length} pratos.`);
+    console.log(`Superusuário associado a ${pratos.length} pratos.`);
   } else {
-    console.log('ℹ Nenhum prato encontrado para associar ao superusuário.');
+    console.log('Nenhum prato encontrado para associar ao superusuário.');
   }
 
   await db.end();
@@ -181,10 +174,10 @@ async function inicializa() {
 
   app.use(cors({
     origin: 'http://localhost:3000', // URL do seu Next.js
-    methods: ['GET','POST','PUT','DELETE'],
-    allowedHeaders: ['Content-Type','Authorization']
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
   }));
-  
+
   app.use('/api', routes);
   // Documentação do back-end em swagger
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));

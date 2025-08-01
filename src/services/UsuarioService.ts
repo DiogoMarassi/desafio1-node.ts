@@ -25,7 +25,6 @@ export class UsuarioService {
   }
 
   async findByEmail(email: string): Promise<Usuario | null> {
-    console.log("email dentro do findbyemail", email)
     return this.repository.findOneBy({
       email: email.trim().toLowerCase(),
     });
@@ -63,7 +62,6 @@ export class UsuarioService {
     if (novoUsuario.cargo === 'ADMIN') {
       const todosPratos = await this.repositoryPrato.find(); // busca todos os pratos ativos
       const todosIds = todosPratos.map((p) => p.id);
-      console.log(todosIds)
       // Usa o método de associação existente
       await this.associarPratos(novoUsuario.id, todosIds);
     }

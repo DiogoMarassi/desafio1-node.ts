@@ -278,8 +278,7 @@ export class UsuarioController {
     if (!email || !senha) {
       return res.status(400).json({ message: 'Email e senha são obrigatórios' });
     }
-    console.log(email);
-    console.log(senha);
+
     const usuario = await service.findByEmail(email);
     if (!usuario) {
       return res.status(401).json({ message: 'Credenciais inválidas' });
@@ -340,9 +339,9 @@ export class UsuarioController {
  */
   async associarPratos(req: Request, res: Response) {
     const { user } = req as AuthenticatedRequest;
-    console.log(user);
+
     const autorizado = await autorizacaoService.usuarioEhAdmin(user.id);
-    console.log(autorizado)
+
     if (!autorizado) {
       return res.status(403).json({ message: 'Esta ação necessita de permissão de administrador!' });
     }

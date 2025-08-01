@@ -204,7 +204,6 @@ export class AutorizacaoController {
    *         description: Token ausente ou inválido.
    */
   async getByUsuarioToken(req: Request, res: Response) {
-    console.log("ENTROUUUUUUUUU!!s");
     const user = (req as AuthenticatedRequest).user;
 
     if (!user || !user.id) {

@@ -33,9 +33,7 @@ export class PratoService {
     if (!prato) return null;
 
     if (usuario.cargo === Cargo.ADMIN) return prato;
-    console.log("usuario e prato em dinfById de PratoService:");
-    console.log("Usuario: ", usuario.id);
-    console.log("Prato:", prato.id);
+
     const autorizado = await this.autorizacaoService.usuarioTemAcessoAoPrato(usuario.id, prato.id);
     if (!autorizado) throw new BadRequestException('Este usuário não tem acesso a este prato!');
 
@@ -43,7 +41,6 @@ export class PratoService {
   }
 
   async create(data: Partial<Prato>, usuario: Usuario): Promise<Prato> {
-    console.log('Criando prato com dados:', data);
 
     // 1. Verifica campos obrigatórios
     if (!data.nome || !data.preco || data.custo === undefined || !data.data_lancamento) {
@@ -91,7 +88,6 @@ export class PratoService {
       });
 
       await this.repositoryAutenticacao.save(autorizacao);
-      console.log(`Autorização criada para usuário ${usuario.id} no prato ${pratoSalvo.id}`);
     }
 
     return pratoSalvo;
