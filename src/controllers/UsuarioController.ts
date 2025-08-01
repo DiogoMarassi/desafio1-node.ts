@@ -255,7 +255,7 @@ export class UsuarioController {
    *                 example: dmaraassi@gmail.com
    *               senha:
    *                 type: string
-   *                 example: arte3427
+   *                 example: 123456
    *     responses:
    *       200:
    *         description: Login realizado com sucesso. Token JWT retornado.

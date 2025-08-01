@@ -38,7 +38,7 @@ A plataforma possui três tipos de usuários, cada um com as devidas permissões
 Observe que, como não posso dar permissão de criação de usuário para usuários normais, ao iniciar a aplicação, um superuser já é criado com as seguintes credenciais:
 
 - **email**: dmaraassi@gmail.com
-- **senha**: arte3427
+- **senha**: 123456
 ---
 
 ## Organização da API e decisões tomadas
@@ -54,7 +54,7 @@ As credencias do banco podem ser ajustadas no .env, a partir das variáveis abai
 - DATABASE_NAME = banco_desafio_golivetech
 - DATABASE_HOST = localhost
 - DATABASE_USER = root
-- DATABASE_PASSWORD = arte3427
+- DATABASE_PASSWORD = 123456
 - PORT = 3000
 
 Também é necessário o secret do JWT também no .env
@@ -129,7 +129,7 @@ export async function verificaBancoComSuperuser() {
   let superUserId: number;
 
   if (rows.length === 0) {
-    const senhaCriptografada = await hash('arte3427', 10);
+    const senhaCriptografada = await hash('123456', 10);
 
     const [result]: any = await db.query(
       `INSERT INTO usuario (nome, email, senha, cargo) VALUES (?, ?, ?, ?)`,
