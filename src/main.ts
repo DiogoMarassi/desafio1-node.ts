@@ -45,7 +45,6 @@ Observe que, como não posso dar permissão de criação de usuário para usuár
 
 - O projeto foi organizado na arquitetura MVC, cada um com sua respectiva entidade de responsabilidade.
 - A verificação da autenticação externa (via token) fica sob responsabilidade dos Controllers e as regras do negócio (autenticação interna/por cargo) sob responsabilidade dos Services.
-- Mesmo sem testes, os repositórios/serviços internos utilizados foram injetados nos controllers como boa prática.
 ---
 
 ## Ambiente
